@@ -32,7 +32,7 @@ class Machine extends Component {
         var blocks = []
         for (var i = 0; i < 42; i++) {
             if (i % 7 !== 0) {
-                blocks.push(<div key={i} className="block-init-yz"/>)
+                blocks.push(<div id={"yz" + i}  key={i} className="block-init-yz"/>)
             } else {
                 blocks.push(<br key={i} />)
             }
@@ -44,7 +44,7 @@ class Machine extends Component {
         var blocks = []
         for (var i = 0; i < 156; i++) {
             if (i % 26 !== 0) {
-                blocks.push(<div key={i} className="block-init-xz" />)
+                blocks.push(<div id={"xz" + i} key={i} className="block-init-xz" />)
             } else {
                 blocks.push(<br key={i} />)
             }
@@ -56,7 +56,7 @@ class Machine extends Component {
         var blocks = []
         for (var i = 0; i < 156; i++) {
             if (i % 26 !== 0) {
-                blocks.push(<div key={i} className="block-init-xy" />)
+                blocks.push(<div id={"xy" + i} key={i} className="block-init-xy" />)
             } else {
                 blocks.push(<br key={i} />)
             }
@@ -80,45 +80,18 @@ class Machine extends Component {
                     maxY: recievedMessage.split(' ')[1],
                     maxZ: recievedMessage.split(' ')[2],
                     delay: recievedMessage.split(' ')[3],
-                }, () => this.deleteBlockInXZ()) 
+                }, () => { this.deleteBlockInXZ(); }) 
 
             })
         })
     }
 
-    sleep(milliseconds) {
-        const date = Date.now();
-        let currentDate = null;
-        do {
-            currentDate = Date.now();
-        } while (currentDate - date < milliseconds);
-    }
-
-    delI(i) {
-        this.sleep(this.state.delay*2)
-        var blocks = this.state.blocksXZ
-        blocks[i] = <div key={i} className="block-del-xz" />;
-        this.setState({ blocksXZ: blocks })
-    }
-
     deleteBlockInXZ() {
-        var blocks = this.state.blocksXZ
-        var blocks1 = this.state.blocksXZ
         var interval;
+        var i = this.state.curX + 1;
 
-        blocks[1] = <div key={1015} className="block-del-xz" />;
-        
-        this.setState({ blocksXZ: blocks }, () => this.delI(2))
-
-        //for (var i = this.state.curX + 1; i < this.state.curX + Number(this.state.maxX) + 1; i++) {
-        //    blocks[i] = <div key={i} className="block-del-xz" />;
-        //    //interval = setInterval(() => console.log(i), this.state.delay);
-        //    this.sleep(this.state.delay * 2)
-        //    console.log(i)
-        //    await this.setState({ blocksXZ: blocks }, () => this.sleep(this.state.delay))
-        //    //setTimeout(() => this.setState({ blocksXZ: blocks }), this.state.delay * i*i*i);
-        //    //setTimeout(() => { clearInterval(interval) }, this.state.delay * this.state.maxX * this.state.maxY * this.state.maxZ);
-        //}
+        interval = setInterval(() => { document.getElementById("xz" + i).style.backgroundColor = "white"; i++ }, this.state.delay);
+        setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curX + Number(this.state.maxX) - 1));
     }
 
     render() {

@@ -90,7 +90,7 @@ class Machine extends Component {
         var interval;
         var i = this.state.curX + 1;
 
-        interval = setInterval(() => { document.getElementById("xz" + i).style.backgroundColor = "white"; i++ }, this.state.delay);
+        interval = setInterval(() => { document.getElementById("xz" + i).style.backgroundColor = "white"; document.getElementById("xz" + i).style.border = "1px solid"; i++ }, this.state.delay);
         setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curX + Number(this.state.maxX) - 1));
     }
 

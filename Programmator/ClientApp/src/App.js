@@ -4,6 +4,7 @@ import { Layout } from './components/Layout/Layout';
 import { Home } from './components/Home/Home';
 import Operator from './components/Operator/Operator';
 import './custom.css'
+import Machine from './components/Machine/Machine';
 
 
 export default class App extends Component {
@@ -14,6 +15,7 @@ export default class App extends Component {
             <Layout>
                 <Route exact path='/' component={Home} />
                 <Route path='/operator' component={Operator} />
+                <Route path='/machine' component={Machine} />
             </Layout>
         );
     }

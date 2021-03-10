@@ -1,9 +1,32 @@
-﻿import React, { useEffect } from 'react';
+﻿import React, { Component, useEffect } from 'react';
 import './Operator.css'
+import * as SignalR from '@aspnet/signalr';
 
-function Operator(props) {
+class Operator extends Component {
 
-    useEffect(() => {
+    constructor(props) {
+        super(props);
+        this.state = {
+            countNotifies: 0,
+            companyName: '',
+            message: "1",
+            messages: [],
+            hubConnection: null,
+            nick: "operator",
+            countInside: 0,
+            workMode: "auto",
+            curX: 0,
+            curY: 0,
+            curZ: 0,
+            maxX: 0,
+            maxY: 0,
+            maxZ: 0,
+            delay: 500
+        };
+    }
+
+    componentDidMount() {
+        this.setConnection();
         const onKeypress = e => console.log(e);
 
         document.addEventListener('keypress', onKeypress);
@@ -11,81 +34,118 @@ function Operator(props) {
         return () => {
             document.removeEventListener('keypress', onKeypress);
         };
-    }, []);
-
-    const [workMode, setWorkMode] = React.useState("auto");
-    const [curX, setCurX] = React.useState("0");
-    const [curY, setCurY] = React.useState("0");
-    const [curZ, setCurZ] = React.useState("0");
-
-    const handleChangeMode = (event) => {
-        setWorkMode(event.target.value)
+        
     }
 
-    const handleChangeCurX = (event) => {
-        setCurX(event.target.value)
+    sendCommands = () => {
+        var commands = this.state.maxX + " " + this.state.maxY + " " + this.state.maxZ + " " + this.state.delay
+
+        this.state.hubConnection
+            .invoke('sendToAll', commands, "hi")
+            .catch(err => console.error(err));
     }
 
-    const handleChangeCurY = (event) => {
-        setCurY(event.target.value)
+    setConnection() {
+        const hubConnection = new SignalR.HubConnectionBuilder().withUrl("/commandhub").build();
+
+        this.setState({ hubConnection }, () => {
+            this.state.hubConnection
+                .start()
+                .then(() => console.log('Connection started!'))
+                .catch(err => console.log('Error while establishing connection :('));
+
+            this.state.hubConnection.on('ReceiveMessage', (recievedMessage) => {
+                console.log(recievedMessage)
+            })
+        })
     }
 
-    const handleChangeCurZ = (event) => {
-        setCurZ(event.target.value)
+    handleChangeMode = (event) => {
+        this.setState({ workMode: event.target.value })
     }
 
-    return (
-        <div className="container-form">
-            <div className="container-center">
-                <div>
-                    <label>XMAX</label>
-                    <input className="container-form-input" placeholder="Введите XMAX от 1 до 10" />
-                </div>
-                <div>
-                    <label>YMAX</label>
-                    <input className="container-form-input" placeholder="Введите YMAX от 1 до 10" />
-                </div>
-                <div>
-                    <label>ZMAX</label>
-                    <input className="container-form-input" placeholder="Введите ZMAX от 1 до 3" />
-                </div>
-                <div>
-                    <label>TZAD</label>
-                    <input className="container-form-input" placeholder="Введите задержку между итерациями от 300 до 5000" />
-                </div>
-                <div className="container-current">
-                    <label>XCUR</label>
-                    <input className="input-current-coors" value={curX} onChange={handleChangeCurX} />
-                </div>
-                <div>
-                    <label>YCUR</label>
-                    <input className="input-current-coors" value={curY} onChange={handleChangeCurY}/>
-                </div>
-                <div>
-                    <label>ZCUR</label>
-                    <input className="input-current-coors" value={curZ} onChange={handleChangeCurZ}/>
-                </div>
-                <div className="container-current">
+    handleChangeCurX = (event) => {
+        this.setState({ curX: event.target.value })
+    }
+
+    handleChangeCurY = (event) => {
+        this.setState({ curY: event.target.value })
+    }
+
+    handleChangeCurZ = (event) => {
+        this.setState({ curZ: event.target.value })
+    }
+
+    handleChangeMaxX = (event) => {
+        this.setState({ maxX: event.target.value })
+    }
+
+    handleChangeMaxY = (event) => {
+        this.setState({ maxY: event.target.value })
+    }
+
+    handleChangeMaxZ = (event) => {
+        this.setState({ maxZ: event.target.value })
+    }
+
+    handleChangeDelay = (event) => {
+        this.setState({ delay: event.target.value })
+    }
+
+    render() {
+        return (
+            <div className="container-form">
+                <div className="container-center">
+                    <h2 style={{ textAlign: "center", marginBottom: "20px" }}>Пульт оператора</h2>
                     <div>
-                        <label>Режим работы</label>
-                        <select className="input-current-coors" value={workMode} onChange={handleChangeMode}>
-                            <option value="auto">Автоматический</option>
-                            <option value="manual">Ручной</option>
-                        </select>
-                        {
-                            workMode === "manual"
-                                ? <button className="button-step">Сделать шаг</button>
-                                : null
-                        }
+                        <label>XMAX</label>
+                        <input className="container-form-input" value={this.state.maxX} onChange={this.handleChangeMaxX} placeholder="Введите XMAX от 1 до 23" />
                     </div>
-                </div>
-                <div className="container-buttons">
-                    <button>Начать процесс</button>
-                    <button>Стоп процесс</button>
-                    <button>Конец процесс</button>
-                </div>
-                <div className="container-commands">
-                    Клавиши для управления:<br />
+                    <div>
+                        <label>YMAX</label>
+                        <input className="container-form-input" value={this.state.maxY} onChange={this.handleChangeMaxY} placeholder="Введите YMAX от 1 до 4" />
+                    </div>
+                    <div>
+                        <label>ZMAX</label>
+                        <input className="container-form-input" value={this.state.maxZ} onChange={this.handleChangeMaxZ} placeholder="Введите ZMAX от 1 до 5" />
+                    </div>
+                    <div>
+                        <label>TZAD</label>
+                        <input className="container-form-input" value={this.state.delay} onChange={this.handleChangeDelay} placeholder="Введите задержку между итерациями от 300 до 5000" />
+                    </div>
+                    <div className="container-current">
+                        <label>XCUR</label>
+                        <input className="input-current-coors" value={this.state.curX} onChange={this.handleChangeCurX} />
+                    </div>
+                    <div>
+                        <label>YCUR</label>
+                        <input className="input-current-coors" value={this.state.curY} onChange={this.handleChangeCurY} />
+                    </div>
+                    <div>
+                        <label>ZCUR</label>
+                        <input className="input-current-coors" value={this.state.curZ} onChange={this.handleChangeCurZ} />
+                    </div>
+                    <div className="container-current">
+                        <div>
+                            <label>Режим работы</label>
+                            <select className="input-current-coors" value={this.state.workMode} onChange={this.handleChangeMode}>
+                                <option value="auto">Автоматический</option>
+                                <option value="manual">Ручной</option>
+                            </select>
+                            {
+                                this.state.workMode === "manual"
+                                    ? <button className="button-step">Сделать шаг</button>
+                                    : null
+                            }
+                        </div>
+                    </div>
+                    <div className="container-buttons">
+                        <button onClick={this.sendCommands}>Начать процесс</button>
+                        <button>Стоп процесс</button>
+                        <button>Конец процесс</button>
+                    </div>
+                    <div className="container-commands">
+                        Клавиши для управления:<br />
                     А - автоформат<br />
                     Р - ручной<br />
                     Н - настройка<br />
@@ -93,10 +153,11 @@ function Operator(props) {
                     Ш - шаг<br />
                     С - стоп<br />
                     К - конец работы<br />
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    }
 }
 
 export default Operator;

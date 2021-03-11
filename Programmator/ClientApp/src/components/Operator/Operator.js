@@ -45,6 +45,14 @@ class Operator extends Component {
             .catch(err => console.error(err));
     }
 
+    sendStop = () => {
+        var commands = "stop"
+
+        this.state.hubConnection
+            .invoke('sendToAll', commands, "hi")
+            .catch(err => console.error(err));
+    }
+
     setConnection() {
         const hubConnection = new SignalR.HubConnectionBuilder().withUrl("/commandhub").build();
 
@@ -56,6 +64,19 @@ class Operator extends Component {
 
             this.state.hubConnection.on('ReceiveMessage', (recievedMessage) => {
                 console.log(recievedMessage)
+                if (recievedMessage[0] === "c") {
+                    this.setState({
+                        curX: recievedMessage.split(' ')[1],
+                        curY: recievedMessage.split(' ')[2]
+                    })
+                }
+                if (recievedMessage[0] === "z") {
+                    this.setState({
+                        curZ: recievedMessage.split(' ')[1],
+                    })
+                }
+                if (recievedMessage === "end")
+                    alert("Деталь готова!")
             })
         })
     }
@@ -141,7 +162,7 @@ class Operator extends Component {
                     </div>
                     <div className="container-buttons">
                         <button onClick={this.sendCommands}>Начать процесс</button>
-                        <button>Стоп процесс</button>
+                        <button onClick={this.sendStop}>Стоп процесс</button>
                         <button>Конец процесс</button>
                     </div>
                     <div className="container-commands">

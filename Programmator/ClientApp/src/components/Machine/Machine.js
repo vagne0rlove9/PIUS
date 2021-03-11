@@ -20,11 +20,11 @@ class Machine extends Component {
             startX: 1,
             startY: 1,
             startZ: 1,
-            delay: 500,
-            delayIter: 500,
-            delayX: 500,
-            delayY: 500,
-            delayZ: 500,
+            delay: 0,
+            delayIter: 0,
+            delayX: 0,
+            delayY: 0,
+            delayZ: 0,
             readyXZ: false,
             readyXY: false,
             readyYZ: false,
@@ -85,13 +85,14 @@ class Machine extends Component {
 
             this.state.hubConnection.on('ReceiveMessage', (recievedMessage) => {
                 //console.log(recievedMessage.split(' '))
-                this.setState({
-                    maxX: recievedMessage.split(' ')[0],
-                    maxY: recievedMessage.split(' ')[1],
-                    maxZ: recievedMessage.split(' ')[2],
-                    delay: recievedMessage.split(' ')[3],
-                }, () => { this.setDelayIter() })
-
+                if (recievedMessage !== "end" && recievedMessage[0] !== "c" && recievedMessage[0] !== "z") {
+                    this.setState({
+                        maxX: recievedMessage.split(' ')[0],
+                        maxY: recievedMessage.split(' ')[1],
+                        maxZ: recievedMessage.split(' ')[2],
+                        delay: recievedMessage.split(' ')[3],
+                    }, () => { this.setDelayIter() })
+                }
             })
         })
     }
@@ -108,8 +109,20 @@ class Machine extends Component {
             this.deleteBlockInXZ();
             this.deleteBlockInYZ();
             this.deleteBlockInXY();
+            this.setEnd();
         })
 
+    }
+
+    setEnd = () => {
+        setTimeout(this.sendEnd, (this.state.delayX * (this.state.maxZ) * this.state.maxY))
+    }
+    //
+    sendEnd = () => {
+        console.log((this.state.delayX * (this.state.maxZ - 1) * this.state.maxY))
+        this.state.hubConnection
+            .invoke('sendToAll', "end", "hi")
+            .catch(err => console.error(err));
     }
 
     rigthMoveXZ(str, count) {
@@ -153,7 +166,7 @@ class Machine extends Component {
 
         let ind = this.state.startX + Number(this.state.maxX);
         interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
-        setTimeout(() => {clearInterval(interval);}, this.state.delayX + 100);
+        setTimeout(() => { clearInterval(interval); }, this.state.delayX + 100);
     }
 
     deleteBlockInXZ() {
@@ -177,6 +190,12 @@ class Machine extends Component {
         }
     }
 
+    sendZ(str) {
+        this.state.hubConnection
+            .invoke('sendToAll', "z " + str, "hi")
+            .catch(err => console.error(err));
+    }
+
     rigthMoveYZ(str, count) {
         //console.log("r" + str)
         //let interval;
@@ -194,8 +213,12 @@ class Machine extends Component {
         let interval;
         let ind;
         ind = this.state.startY + 1;
-
-        interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind++ }, this.state.delayX);
+        
+        interval = setInterval(() => {
+            document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid";
+            this.sendZ(str + 1);
+            ind++;
+        }, this.state.delayX);
         setTimeout(() => { clearInterval(interval) }, this.state.delayX * this.state.maxY + 100);
     }
 
@@ -210,7 +233,11 @@ class Machine extends Component {
         let interval;
         let ind = this.state.startY + Number(this.state.maxY);
 
-        interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind-- }, this.state.delayX);
+        interval = setInterval(() => {
+            document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid";
+            this.sendZ(str + 1);
+            ind--;
+        }, this.state.delayX);
         setTimeout(() => { clearInterval(interval) }, this.state.delayX * this.state.maxY + 100);
     }
 
@@ -236,6 +263,13 @@ class Machine extends Component {
         }
     }
 
+    sendXY(ind, str) {
+        console.log(ind)
+        this.state.hubConnection
+            .invoke('sendToAll', "c " + (ind % 26) + " " + (str), "hi")
+            .catch(err => console.error(err));
+    }
+
     rigthMoveXY(str, count) {
         //let interval;
         //let ind;
@@ -247,10 +281,16 @@ class Machine extends Component {
         //setTimeout(() => { clearInterval(interval); }, this.state.delay * (count));
         let interval;
         let ind;
-        ind = this.state.startX + 27;
+        ind = this.state.startX + 27 + 26 * str;
 
-        interval = setInterval(() => { document.getElementById("xy" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
+        interval = setInterval(() => {
+            document.getElementById("xy" + Number(ind )).style.backgroundColor = "white";
+            document.getElementById("xy" + Number(ind )).style.border = "1px solid";
+            this.sendXY(ind, str + 1)
+            ind++;
+        }, this.state.delay);
         setTimeout(() => { clearInterval(interval); }, this.state.delayX + 100);
+
     }
 
     leftMoveXY(str) {
@@ -273,11 +313,15 @@ class Machine extends Component {
         //    //}
         //}, this.state.delayX);
 
-        console.log("leXY" + str)
         let interval;
-        let ind = this.state.startX + Number(this.state.maxX);
+        let ind = this.state.startX + Number(this.state.maxX) + 26 * (str + 1);
 
-        interval = setInterval(() => { document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.border = "1px solid"; ind-- }, this.state.delay);
+        interval = setInterval(() => {
+            document.getElementById("xy" + Number(ind )).style.backgroundColor = "white";
+            document.getElementById("xy" + Number(ind )).style.border = "1px solid";
+            this.sendXY(ind, str + 1)
+            ind--;
+        }, this.state.delay);
         setTimeout(() => { clearInterval(interval); }, this.state.delayX + 100);
 
     }
@@ -288,12 +332,17 @@ class Machine extends Component {
         //    document.getElementById("xy" + Number(this.state.startX + 27)).style.border = "1px solid";
         //}, this.state.delay); 
         for (let i = 0; i < this.state.maxY; i++) {
-            if (i === 0)
+            if (i === 0) {
                 this.rigthMoveXY(i);
+
+            }
             else {
-                if (i % 2 === 0)
+                if (i % 2 === 0) {
                     setTimeout(() => this.rigthMoveXY(i), this.state.delayX * i);
-                else setTimeout(() => this.leftMoveXY(i), this.state.delayX * i);
+                }
+                else {
+                    setTimeout(() => this.leftMoveXY(i), this.state.delayX * i);
+                }
                 //if (i % 2 === 0)
                 //    setTimeout(() => this.rigthMoveXY(i, this.state.maxX), this.state.delayX * i);
                 //else if (i === 1)

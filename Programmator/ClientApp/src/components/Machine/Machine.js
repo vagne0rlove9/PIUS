@@ -44,7 +44,22 @@ class Machine extends Component {
             stepXXY: 2,
             stepXYStr: 1,
             dirXY: "right",
-            countSteps: 0,
+            stepXXZ: 2,
+            stepXZStr: 0,
+            dirXZ: "right",
+            stepXYZ: 2,
+            stepYZStr: 0,
+            dirYZ: "right",
+            countStepsXY: 0,
+            countStepsXZ: 0,
+            countStepsYZ: 0,
+            skipXZ: false,
+            skipStepXZ: 0,
+            drawStepXZ: 0,
+            skipStepYZ: 0,
+            drawStepYZ: 0,
+            chgStrYZ: 0,
+            isEnd: false,
         };
     }
 
@@ -134,7 +149,7 @@ class Machine extends Component {
 
             this.state.hubConnection.on('ReceiveMessage', (recievedMessage) => {
                 //console.log(recievedMessage.split(' '))
-                if (recievedMessage !== "end" && recievedMessage[0] !== "c" && recievedMessage[0] !== "z" && recievedMessage[0] !== 's' && recievedMessage[0] !== 'k' && recievedMessage[0] !== 'm') {
+                if (recievedMessage !== "end" && recievedMessage[0] !== "x" && recievedMessage[0] !== "y" && recievedMessage[0] !== "c" && recievedMessage[0] !== "z" && recievedMessage[0] !== 's' && recievedMessage[0] !== 'k' && recievedMessage[0] !== 'm') {
                     if (!this.state.flagPause) {
                         this.setState({
                             maxX: recievedMessage.split(' ')[0],
@@ -158,6 +173,11 @@ class Machine extends Component {
                         maxX: recievedMessage.split(' ')[1],
                         maxY: recievedMessage.split(' ')[2],
                         maxZ: recievedMessage.split(' ')[3],
+                        skipStepXZ: Number(recievedMessage.split(' ')[1]) * (Number(recievedMessage.split(' ')[2]) - 1),
+                        drawStepXZ: Number(recievedMessage.split(' ')[1]),
+                        skipStepYZ: Number(recievedMessage.split(' ')[1]) - 1,
+                        drawStepYZ: 1,
+                        chgStrYZ: Number(recievedMessage.split(' ')[1]) * (Number(recievedMessage.split(' ')[2])),
                     })
                 }
 
@@ -180,6 +200,8 @@ class Machine extends Component {
 
                     //}
                     this.stepXY();
+                    this.stepXZ();
+                    this.stepYZ();
                     console.log("step")
                 }
 
@@ -233,50 +255,154 @@ class Machine extends Component {
     }
 
     stepXY() {
-        
-        var str = this.state.stepXYStr;
-        var ind = this.state.stepXXY + 26 * str;
-        console.log(ind % 26)
-        console.log(Number(this.state.maxX))
-        this.state.countSteps = this.state.countSteps + 1;
-        if (this.state.countSteps % Number(this.state.maxX) === 0) {
-            console.log("next")
-            str = str + 1
-            ind = this.state.stepXXY + 26 * str;
-            console.log(ind)
-            if (this.state.dirXY == "right")
-                this.state.dirXY = "left";
-            else this.state.dirXY = "right";
+        if (this.state.stepXYStr !== Number(this.state.maxY) + 1) {
+            //var str = this.state.stepXYStr;
+            
+            var ind = this.state.stepXXY + 26 * this.state.stepXYStr;
+            
+            //this.sendXY(ind, this.state.stepXYStr)
+            this.state.countStepsXY = this.state.countStepsXY + 1;
+            if (Number(this.state.countStepsXY) % (Number(this.state.maxX) + 1) === 0) {
+                this.state.stepXYStr = this.state.stepXYStr + 1
+
+                ind = this.state.stepXXY + 26 * this.state.stepXYStr;
+                this.state.countStepsXY = this.state.countStepsXY + 1;
+                if (this.state.dirXY == "right")
+                    this.state.dirXY = "left";
+                else {
+                    this.state.dirXY = "right";
+                }
+            }
+            if (this.state.stepXYStr !== Number(this.state.maxY) + 1) {
+                if (this.state.dirXY === "right") {
+                    this.sendX(ind % 26)
+                    document.getElementById("xy" + Number(ind)).style.backgroundColor = "white";
+                    document.getElementById("xy" + Number(ind)).style.border = "1px solid";
+                    ind = ind + 1
+                } else {
+                    
+                    ind = ind - 1
+                    this.sendX(ind % 26)
+                    document.getElementById("xy" + Number(ind)).style.backgroundColor = "white";
+                    document.getElementById("xy" + Number(ind)).style.border = "1px solid";
+                }
+
+                if (this.state.dirXY === "right") {
+                    this.setState({
+                        stepXXY: this.state.stepXXY + 1,
+                    })
+                } else {
+                    this.setState({
+                        stepXXY: this.state.stepXXY - 1,
+                    })
+                }
+            }
         }
-        if (this.state.dirXY === "right") {
-            console.log("right")
-            document.getElementById("xy" + Number(ind)).style.backgroundColor = "white";
-            document.getElementById("xy" + Number(ind)).style.border = "1px solid";
-            ind = ind + 1
-        } else {
-            console.log("left")
-            ind = ind - 1
-            document.getElementById("xy" + Number(ind)).style.backgroundColor = "white";
-            document.getElementById("xy" + Number(ind)).style.border = "1px solid";
+
+    }
+
+    stepXZ() {
+        if (this.state.stepXZStr !== Number(this.state.maxZ)) {
             
             
+            if (this.state.drawStepXZ !== 0) {
+                //this.sendX(this.state.stepXXZ)
+                this.state.drawStepXZ = this.state.drawStepXZ - 1;
+                if (this.state.dirXZ === "right") {
+                    document.getElementById("xz" + Number(this.state.stepXXZ + 26 * this.state.stepXZStr)).style.backgroundColor = "white";
+                    document.getElementById("xz" + Number(this.state.stepXXZ + 26 * this.state.stepXZStr)).style.border = "1px solid";
+                    this.sendX(this.state.stepXXZ % 26)
+                    this.state.stepXXZ = this.state.stepXXZ + 1;
+                    
+                } else {
+                    //ind = ind - 1
+                    this.state.stepXXZ = this.state.stepXXZ - 1;
+                    this.sendX(this.state.stepXXZ % 26)
+                    document.getElementById("xz" + Number(this.state.stepXXZ + 26 * this.state.stepXZStr)).style.backgroundColor = "white";
+                    document.getElementById("xz" + Number(this.state.stepXXZ + 26 * this.state.stepXZStr)).style.border = "1px solid";
+                }
+            }
+            if (this.state.drawStepXZ === 0 && this.state.skipStepXZ !== 0) {
+                this.state.skipStepXZ = this.state.skipStepXZ - 1;
+            } else if (this.state.skipStepXZ === 0 && this.state.drawStepXZ === 0) {
+                this.state.drawStepXZ = Number(this.state.maxX)
+                this.state.skipStepXZ = Number(this.state.maxX) * (Number(this.state.maxY) - 1)
+                this.state.stepXZStr = this.state.stepXZStr + 1
+                if (this.state.dirXZ === "right")
+                    this.state.dirXZ = "left"
+                else this.state.dirXZ = "right"
+            }
+            
         }
 
-        if (this.state.dirXY === "right") {
-            this.setState({
-                stepXXY: this.state.stepXXY + 1,
-                stepXYStr: str,
+    }
 
-            })
-        } else {
-            this.setState({
-                stepXXY: this.state.stepXXY - 1,
-                stepXYStr: str,
+    sendX(str) {
+        this.state.hubConnection
+            .invoke('sendToAll', "x " + str, "hi")
+            .catch(err => console.error(err));
+    }
 
-            })
+    sendY(str) {
+        this.state.hubConnection
+            .invoke('sendToAll', "y " + str, "hi")
+            .catch(err => console.error(err));
+    }
+
+    stepYZ() {
+        if (this.state.stepYZStr !== Number(this.state.maxZ)) {
+            this.sendZ(this.state.stepYZStr + 1);
+            
+            if (this.state.drawStepYZ !== 0) {
+
+                console.log("this.state.drawStepXZ !== 0 | " + this.state.stepXYZ);
+                console.log("this.state.drawStepXZ !== 0 ? " + this.state.dirYZ);
+                if (this.state.dirYZ === "right") {
+                    document.getElementById("yz" + Number(this.state.stepXYZ + 7 * this.state.stepYZStr)).style.backgroundColor = "white";
+                    document.getElementById("yz" + Number(this.state.stepXYZ + 7 * this.state.stepYZStr)).style.border = "1px solid";
+                    this.sendY((this.state.stepXYZ + 7 * this.state.stepYZStr) % 7)
+                    this.state.stepXYZ = this.state.stepXYZ + 1;
+                    
+                } else {
+                    //ind = ind - 1
+                    this.state.stepXYZ = this.state.stepXYZ - 1;
+                    document.getElementById("yz" + Number(this.state.stepXYZ + 7 * this.state.stepYZStr)).style.backgroundColor = "white";
+                    document.getElementById("yz" + Number(this.state.stepXYZ + 7 * this.state.stepYZStr)).style.border = "1px solid";
+                }
+                this.state.drawStepYZ = this.state.drawStepYZ - 1;
+                this.state.chgStrYZ = this.state.chgStrYZ - 1
+            }
+            if (this.state.drawStepYZ === 0 && this.state.skipStepYZ !== 0) {
+                console.log("this.state.drawStepXZ === 0 && this.state.skipStepXZ !== 0");
+                this.state.skipStepYZ = this.state.skipStepYZ - 1;
+                //this.state.stepXYZ = this.state.stepXYZ + 1;
+                this.state.chgStrYZ = this.state.chgStrYZ - 1
+            } else if (this.state.skipStepYZ === 0 && this.state.drawStepYZ === 0) {
+                console.log("this.state.skipStepXZ === 0 && this.state.drawStepXZ === 0")
+                this.state.drawStepYZ = 1
+                this.state.skipStepYZ = Number(this.state.maxX) - 1
+                console.log("this.state.stepXYZ " + this.state.stepXYZ)
+                console.log("this.state.chgStrYZ " + this.state.chgStrYZ)
+                if (this.state.chgStrYZ === 0) {
+                    this.state.stepYZStr = this.state.stepYZStr + 1
+                    if (this.state.dirYZ === "right")
+                        this.state.dirYZ = "left"
+                    else this.state.dirYZ = "right"
+                    this.state.chgStrYZ = Number(this.state.maxX) * Number(this.state.maxY)
+                    this.state.skipStepYZ = Number(this.state.maxX) - 1
+                    console.log("this.state.stepYZStr aftr " + this.state.stepYZStr)
+                }
+
+                console.log(this.state.drawStepYZ)
+                console.log(this.state.skipStepYZ)
+                console.log(this.state.stepYZStr)
+            }
+
+        } else if (!this.state.isEnd) {
+            this.state.isEnd = true;
+            this.sendEnd();
         }
 
-        
     }
 
     setDelayIter() {
@@ -563,14 +689,14 @@ class Machine extends Component {
             start = start + 1;
             console.log("start=" + start)
         }
-            
+
         for (let i = start; i < this.state.maxZ; i++) {
             if (skip && ((this.state.curXZx % 26 - 1) < this.state.maxX)) {
                 //console.log(this.state.curXZx % 26 - 1)
                 //console.log(this.state.timeXY + " time")
                 if (this.state.directionXZ === "right")
-                        this.conRigthMoveXZ(i);
-                    else this.conLeftMoveXZ(i);
+                    this.conRigthMoveXZ(i);
+                else this.conLeftMoveXZ(i);
                 //if ((this.state.curXZx % 26 - 1) !== this.state.maxX) {
                 //    if (this.state.directionXZ === "right")
                 //        this.conRigthMoveXZ(i);
@@ -645,7 +771,7 @@ class Machine extends Component {
             start = start + 1;
             console.log("start=" + start)
         }
-            
+
         for (let i = start; i < this.state.maxZ; i++) {
             //if (i === 0)
             //    this.rigthMoveYZ(i);
@@ -655,7 +781,7 @@ class Machine extends Component {
             //    else setTimeout(() => this.leftMoveYZ(i), this.state.delayX * i * this.state.maxY);
             //}
             if (skip && ((this.state.curY % 7 - 1) < this.state.maxY)) {
-                console.log(this.state.curY % 7 - 1) 
+                console.log(this.state.curY % 7 - 1)
                 console.log(this.state.timeXY + " time")
                 if (this.state.directionYZ === "right")
                     this.conRigthMoveYZ(i);

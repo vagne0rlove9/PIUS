@@ -99,6 +99,18 @@ class Operator extends Component {
                         curZ: recievedMessage.split(' ')[1],
                     })
                 }
+
+                if (recievedMessage[0] === "x") {
+                    this.setState({
+                        curX: recievedMessage.split(' ')[1],
+                    })
+                }
+
+                if (recievedMessage[0] === "y") {
+                    this.setState({
+                        curY: recievedMessage.split(' ')[1],
+                    })
+                }
                 if (recievedMessage === "end")
                     alert("Деталь готова!")
             })
@@ -192,14 +204,16 @@ class Operator extends Component {
                         <button onClick={this.sendKill}>Конец процесс</button>
                     </div>
                     <div className="container-commands">
-                        Клавиши для управления:<br />
-                    А - автоформат<br />
-                    Р - ручной<br />
-                    Н - настройка<br />
-                    П - пуск<br />
-                    Ш - шаг<br />
-                    С - стоп<br />
-                    К - конец работы<br />
+                        {
+                    //        Клавиши для управления:<br />
+                    //А - автоформат<br />
+                    //Р - ручной<br />
+                    //Н - настройка<br />
+                    //П - пуск<br />
+                    //Ш - шаг<br />
+                    //С - стоп<br />
+                    //К - конец работы<br />
+                        }
                     </div>
                 </div>
             </div>

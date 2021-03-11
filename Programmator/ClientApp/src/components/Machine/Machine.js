@@ -17,11 +17,17 @@ class Machine extends Component {
             maxX: 0,
             maxY: 0,
             maxZ: 0,
+            startX: 1,
+            startY: 1,
+            startZ: 1,
             delay: 500,
             delayIter: 500,
             delayX: 500,
             delayY: 500,
             delayZ: 500,
+            readyXZ: false,
+            readyXY: false,
+            readyYZ: false,
         };
     }
 
@@ -36,7 +42,7 @@ class Machine extends Component {
         var blocks = []
         for (var i = 0; i < 42; i++) {
             if (i % 7 !== 0) {
-                blocks.push(<div id={"yz" + i}  key={i} className="block-init-yz"/>)
+                blocks.push(<div id={"yz" + i} key={i} className="block-init-yz" />)
             } else {
                 blocks.push(<br key={i} />)
             }
@@ -84,7 +90,7 @@ class Machine extends Component {
                     maxY: recievedMessage.split(' ')[1],
                     maxZ: recievedMessage.split(' ')[2],
                     delay: recievedMessage.split(' ')[3],
-                }, () => { this.setDelayIter() }) 
+                }, () => { this.setDelayIter() })
 
             })
         })
@@ -95,110 +101,204 @@ class Machine extends Component {
 
         this.setState({
             delayIter: max * this.state.delay,
-            delayX: (this.state.curX + Number(this.state.maxX) - 1) * this.state.delay,
-            delayY: (this.state.curY + Number(this.state.maxY) - 1) * this.state.delay,
-            delayZ: (this.state.curZ + Number(this.state.maxZ) - 1) * this.state.delay
+            delayX: (this.state.startX + Number(this.state.maxX) - 1) * this.state.delay,
+            delayY: (this.state.startX + Number(this.state.maxY) - 1) * this.state.delay,
+            delayZ: (this.state.startX + Number(this.state.maxZ) - 1) * this.state.delay
         }, () => {
             this.deleteBlockInXZ();
             this.deleteBlockInYZ();
             this.deleteBlockInXY();
         })
-        
+
     }
 
-    rigthMovaeXZ(str) {
-        console.log("r" + str)
-        let interval;
-        let ind = this.state.curX + 1;
+    rigthMoveXZ(str, count) {
+        //console.log("r" + str)
+        //let interval;
+        //let ind;
+        //if (count < this.state.maxX)
+        //    ind = this.state.startX + 2;
+        //else ind = this.state.startX + 1;
 
-        interval = setInterval(() => { console.log("xz" + Number(ind + 26 * str)); document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
-        setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curX + Number(this.state.maxX) - 1));
+        //interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
+        //setTimeout(() => { clearInterval(interval) }, this.state.delay * (count));
+        let interval;
+        let ind;
+        ind = this.state.startX + 1;
+
+        interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
+        setTimeout(() => { clearInterval(interval) }, this.state.delayX + 100);
     }
 
-    leftMovaeXZ(str) {
-        console.log("le" + str)
-        let interval;
-        let ind = this.state.curX + Number(this.state.maxX);
+    leftMoveXZ(str) {
+        //console.log("le" + str)
+        //let interval;
 
+        //let ind = this.state.startX + Number(this.state.maxX);
+        //let start = ind;
+        //interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
+        //setTimeout(() => {
+        //    clearInterval(interval);
+        //    //if ((start - ind) < (this.state.maxX)) {
+        //    //    if ((start - ind) !== (this.state.maxX - 1)) {
+        //    //        //setTimeout(() => { document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.border = "1px solid"; ind-- }, this.state.delay);
+        //    //        document.getElementById("xz" + Number(ind - 1 + 26 * (str))).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind - 1 + 26 * (str))).style.border = "1px solid";
+        //    //    }
+        //    //    else {
+        //    //        document.getElementById("xz" + Number(ind + 26 * (str))).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * (str))).style.border = "1px solid";
+        //    //    }
+        //    //}
+        //}, this.state.delayX);
+        let interval;
+
+        let ind = this.state.startX + Number(this.state.maxX);
         interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
-        setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curX + Number(this.state.maxX) - 1));
+        setTimeout(() => {clearInterval(interval);}, this.state.delayX + 100);
     }
 
     deleteBlockInXZ() {
+        //setTimeout(() => {
+        //    document.getElementById("xz" + Number(this.state.startX)).style.backgroundColor = "white";
+        //    document.getElementById("xz" + Number(this.state.startX)).style.border = "1px solid";
+        //}, this.state.delay);
         for (let i = 0; i < this.state.maxZ; i++) {
-            console.log(i);
             if (i === 0)
-                this.rigthMovaeXZ(i);
+                this.rigthMoveXZ(i);
             else {
+                //if (i % 2 === 0)
+                //    setTimeout(() => this.rigthMoveXZ(i, this.state.maxX), this.state.delayX * i * this.state.maxY);
+                //else if (i === 1)
+                //    setTimeout(() => this.leftMoveXZ(i), this.state.delayX * i * this.state.maxY);
+                //else setTimeout(() => this.leftMoveXZ(i), this.state.delayX * i * this.state.maxY);
                 if (i % 2 === 0)
-                    setTimeout(() => this.rigthMovaeXZ(i), this.state.delayIter * i);
-                else setTimeout(() => this.leftMovaeXZ(i), this.state.delayIter * i);
+                    setTimeout(() => this.rigthMoveXZ(i), this.state.delayX * i * this.state.maxY);
+                else setTimeout(() => this.leftMoveXZ(i), this.state.delayX * i * this.state.maxY);
             }
         }
     }
 
-    rigthMovaeYZ(str) {
-        console.log("r" + str)
-        let interval;
-        let ind = this.state.curY + 1;
+    rigthMoveYZ(str, count) {
+        //console.log("r" + str)
+        //let interval;
+        //let ind;
+        //if (count < this.state.maxY)
+        //    ind = this.state.startY + 2;
+        //else ind = this.state.startY + 1;
 
-        //interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
-        //setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curY + Number(this.state.maxY) - 1));
-        //interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
+
+        ////interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
+        ////setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curY + Number(this.state.maxY) - 1));
+        ////interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
+        //interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind++ }, this.state.delayX);
+        //setTimeout(() => { clearInterval(interval) }, this.state.delayX * (count));
+        let interval;
+        let ind;
+        ind = this.state.startY + 1;
+
         interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind++ }, this.state.delayX);
-        setTimeout(() => { clearInterval(interval) }, this.state.delayX * (this.state.curY + Number(this.state.maxY) - 1));
+        setTimeout(() => { clearInterval(interval) }, this.state.delayX * this.state.maxY + 100);
     }
 
-    leftMovaeYZ(str) {
-        console.log("le" + str)
+    leftMoveYZ(str) {
+        //console.log("le" + str)
+        //let interval;
+        //let ind = this.state.startY + Number(this.state.maxY);
+
+        ////interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
+        //interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind-- }, this.state.delayX);
+        //setTimeout(() => { clearInterval(interval) }, this.state.delayX * (this.state.startY + Number(this.state.maxY) - 1));
         let interval;
-        let ind = this.state.curY + Number(this.state.maxY);
-        
-        //interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
+        let ind = this.state.startY + Number(this.state.maxY);
+
         interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind-- }, this.state.delayX);
-        setTimeout(() => { clearInterval(interval) }, this.state.delayX * (this.state.curY + Number(this.state.maxY) - 1));
+        setTimeout(() => { clearInterval(interval) }, this.state.delayX * this.state.maxY + 100);
     }
 
     deleteBlockInYZ() {
+        //setTimeout(() => {
+        //    document.getElementById("yz" + Number(this.state.startX)).style.backgroundColor = "white";
+        //    document.getElementById("yz" + Number(this.state.startX)).style.border = "1px solid";
+        //}, this.state.delay);
         for (let i = 0; i < this.state.maxZ; i++) {
-            console.log(i);
             if (i === 0)
-                this.rigthMovaeYZ(i);
+                this.rigthMoveYZ(i);
             else {
+                //if (i % 2 === 0)
+                //    setTimeout(() => this.rigthMoveYZ(i, this.state.maxY), this.state.delay * (this.state.startX + Number(this.state.maxX) - 1) * i);
+                ////else setTimeout(() => this.leftMoveYZ(i), this.state.delayX * i);
+                //else if (i === 1)
+                //    setTimeout(() => this.leftMoveYZ(i), this.state.delay * (this.state.startX + Number(this.state.maxX) - 2) * i * this.state.maxY);
+                //else setTimeout(() => this.leftMoveYZ(i), this.state.delayX * i);
                 if (i % 2 === 0)
-                    setTimeout(() => this.rigthMovaeYZ(i), this.state.delayIter * i);
-                else setTimeout(() => this.leftMovaeYZ(i), this.state.delayIter * i);
+                    setTimeout(() => this.rigthMoveYZ(i), this.state.delayX * i * this.state.maxY);
+                else setTimeout(() => this.leftMoveYZ(i), this.state.delayX * i * this.state.maxY);
             }
         }
     }
 
-    rigthMovaeXY(str) {
-        console.log("r" + str)
+    rigthMoveXY(str, count) {
+        //let interval;
+        //let ind;
+        //if (count < this.state.maxX)
+        //    ind = this.state.startX + 28;
+        //else ind = this.state.startX + 27;
+
+        //interval = setInterval(() => { document.getElementById("xy" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
+        //setTimeout(() => { clearInterval(interval); }, this.state.delay * (count));
         let interval;
-        let ind = this.state.curX + 27;
+        let ind;
+        ind = this.state.startX + 27;
 
         interval = setInterval(() => { document.getElementById("xy" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
-        setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curX + Number(this.state.maxX) - 1));
+        setTimeout(() => { clearInterval(interval); }, this.state.delayX + 100);
     }
 
-    leftMovaeXY(str) {
-        console.log("le" + str)
-        let interval;
-        let ind = this.state.curX + 26 + Number(this.state.maxX);
+    leftMoveXY(str) {
+        //console.log("leXY" + str)
+        //let interval;
+        //let ind = this.state.startX + Number(this.state.maxX);
+        //let start = ind;
 
-        interval = setInterval(() => { document.getElementById("xy" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
-        setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curX + Number(this.state.maxX) - 1));
+        //interval = setInterval(() => { document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.border = "1px solid"; ind-- }, this.state.delay);
+        //setTimeout(() => {
+        //    clearInterval(interval);
+        //    //if ((start - ind) < (this.state.maxX)) {
+        //    //    if ((start - ind) !== (this.state.maxX - 1)) {
+        //    //        //setTimeout(() => { document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.border = "1px solid"; ind-- }, this.state.delay);
+        //    //        document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.border = "1px solid";
+        //    //    }
+        //    //    else {
+        //    //        document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.border = "1px solid"; ind--
+        //    //    }
+        //    //}
+        //}, this.state.delayX);
+
+        console.log("leXY" + str)
+        let interval;
+        let ind = this.state.startX + Number(this.state.maxX);
+
+        interval = setInterval(() => { document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.border = "1px solid"; ind-- }, this.state.delay);
+        setTimeout(() => { clearInterval(interval); }, this.state.delayX + 100);
+
     }
 
     deleteBlockInXY() {
+        //setTimeout(() => {
+        //    document.getElementById("xy" + Number(this.state.startX + 27)).style.backgroundColor = "white";
+        //    document.getElementById("xy" + Number(this.state.startX + 27)).style.border = "1px solid";
+        //}, this.state.delay); 
         for (let i = 0; i < this.state.maxY; i++) {
-            console.log(i);
             if (i === 0)
-                this.rigthMovaeXY(i);
+                this.rigthMoveXY(i);
             else {
                 if (i % 2 === 0)
-                    setTimeout(() => this.rigthMovaeXY(i), this.state.delayIter * i);
-                else setTimeout(() => this.leftMovaeXY(i), this.state.delayIter * i);
+                    setTimeout(() => this.rigthMoveXY(i), this.state.delayX * i);
+                else setTimeout(() => this.leftMoveXY(i), this.state.delayX * i);
+                //if (i % 2 === 0)
+                //    setTimeout(() => this.rigthMoveXY(i, this.state.maxX), this.state.delayX * i);
+                //else if (i === 1)
+                //    setTimeout(() => this.leftMoveXY(i), this.state.delayX * i);
+                //else setTimeout(() => this.leftMoveXY(i), this.state.delayX * i);
             }
         }
     }

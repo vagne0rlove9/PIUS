@@ -28,6 +28,10 @@ class Machine extends Component {
             readyXZ: false,
             readyXY: false,
             readyYZ: false,
+            saveX: 0,
+            saveY: 0,
+            saveZ: 0,
+            flagPause: false,
         };
     }
 
@@ -42,7 +46,7 @@ class Machine extends Component {
         var blocks = []
         for (var i = 0; i < 42; i++) {
             if (i % 7 !== 0) {
-                blocks.push(<div id={"yz" + i} key={i} className="block-init-yz" />)
+                blocks.push(<div id={"yz" + i} key={i} className="block-init-yz" style={{ backgroundColor: "black" }}  />)
             } else {
                 blocks.push(<br key={i} />)
             }
@@ -54,7 +58,7 @@ class Machine extends Component {
         var blocks = []
         for (var i = 0; i < 156; i++) {
             if (i % 26 !== 0) {
-                blocks.push(<div id={"xz" + i} key={i} className="block-init-xz" />)
+                blocks.push(<div id={"xz" + i} key={i} className="block-init-xz" style={{ backgroundColor: "black" }}  />)
             } else {
                 blocks.push(<br key={i} />)
             }
@@ -66,12 +70,45 @@ class Machine extends Component {
         var blocks = []
         for (var i = 0; i < 156; i++) {
             if (i % 26 !== 0) {
-                blocks.push(<div id={"xy" + i} key={i} className="block-init-xy" />)
+                blocks.push(<div id={"xy" + i} key={i} className="block-init-xy" style={{ backgroundColor: "black" }} />)
             } else {
                 blocks.push(<br key={i} />)
             }
         }
+        console.log(blocks)
         this.setState({ blocksXY: blocks })
+    }
+
+    resetBlocksYZ() {
+        var blocks = this.state.blocksYZ
+        for (var i = 0; i < 42; i++) {
+            if (i % 7 !== 0) {
+                //console.log(blocks[i].props.id)
+                document.getElementById(blocks[i].props.id).style.backgroundColor = "black";
+            } 
+        }
+        //this.setState({ blocksYZ: blocks })
+    }
+
+    resetBlocksXZ() {
+        var blocks = this.state.blocksXZ
+        for (var i = 0; i < 156; i++) {
+            if (i % 26 !== 0) {
+                document.getElementById(blocks[i].props.id).style.backgroundColor = "black";
+            }
+        }
+        //this.setState({ blocksXZ: blocks })
+    }
+
+    resetBlocksXY() {
+        var blocks = this.state.blocksXY
+        for (var i = 0; i < 156; i++) {
+            if (i % 26 !== 0) {
+                document.getElementById(blocks[i].props.id).style.backgroundColor = "black";
+            }
+        }
+        //console.log(blocks)
+        //this.setState({ blocksXY: blocks })
     }
 
     setConnection() {
@@ -85,13 +122,38 @@ class Machine extends Component {
 
             this.state.hubConnection.on('ReceiveMessage', (recievedMessage) => {
                 //console.log(recievedMessage.split(' '))
-                if (recievedMessage !== "end" && recievedMessage[0] !== "c" && recievedMessage[0] !== "z") {
-                    this.setState({
-                        maxX: recievedMessage.split(' ')[0],
-                        maxY: recievedMessage.split(' ')[1],
-                        maxZ: recievedMessage.split(' ')[2],
-                        delay: recievedMessage.split(' ')[3],
-                    }, () => { this.setDelayIter() })
+                if (recievedMessage !== "end" && recievedMessage[0] !== "c" && recievedMessage[0] !== "z" && recievedMessage[0] !== 's' && recievedMessage[0] !== 'k') {
+                    //if (!this.state.flagPause) {
+                        this.setState({
+                            maxX: recievedMessage.split(' ')[0],
+                            maxY: recievedMessage.split(' ')[1],
+                            maxZ: recievedMessage.split(' ')[2],
+                            delay: recievedMessage.split(' ')[3],
+                        }, () => { this.setDelayIter() })
+                    //} else {
+
+                    //}
+                }
+                
+                if (recievedMessage[0] === 's') {
+                    var high = setTimeout(";")
+                    for (var i = 0; i < high; i++) {
+                        clearInterval(i);
+                        //this.setState({ flagPause: true })
+                    }
+                    console.log("stopped")
+                }
+
+                if (recievedMessage[0] === 'k') {
+                    var high = setTimeout(";")
+                    for (var i = 0; i < high; i++) {
+                        clearInterval(i);
+                        //this.setState({ flagPause: true })
+                    }
+                    this.resetBlocksYZ();
+                    this.resetBlocksXZ();
+                    this.resetBlocksXY();
+                    console.log("killed")
                 }
             })
         })
@@ -117,7 +179,7 @@ class Machine extends Component {
     setEnd = () => {
         setTimeout(this.sendEnd, (this.state.delayX * (this.state.maxZ) * this.state.maxY))
     }
-    //
+    
     sendEnd = () => {
         console.log((this.state.delayX * (this.state.maxZ - 1) * this.state.maxY))
         this.state.hubConnection
@@ -264,7 +326,6 @@ class Machine extends Component {
     }
 
     sendXY(ind, str) {
-        console.log(ind)
         this.state.hubConnection
             .invoke('sendToAll', "c " + (ind % 26) + " " + (str), "hi")
             .catch(err => console.error(err));

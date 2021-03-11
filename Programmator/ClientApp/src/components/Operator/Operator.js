@@ -53,6 +53,14 @@ class Operator extends Component {
             .catch(err => console.error(err));
     }
 
+    sendKill = () => {
+        var commands = "kill"
+
+        this.state.hubConnection
+            .invoke('sendToAll', commands, "hi")
+            .catch(err => console.error(err));
+    }
+
     setConnection() {
         const hubConnection = new SignalR.HubConnectionBuilder().withUrl("/commandhub").build();
 
@@ -163,7 +171,7 @@ class Operator extends Component {
                     <div className="container-buttons">
                         <button onClick={this.sendCommands}>Начать процесс</button>
                         <button onClick={this.sendStop}>Стоп процесс</button>
-                        <button>Конец процесс</button>
+                        <button onClick={this.sendKill}>Конец процесс</button>
                     </div>
                     <div className="container-commands">
                         Клавиши для управления:<br />

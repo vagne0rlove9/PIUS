@@ -17,7 +17,8 @@ class Machine extends Component {
             maxX: 0,
             maxY: 0,
             maxZ: 0,
-            delay: 500
+            delay: 500,
+            ready: false
         };
     }
 
@@ -86,12 +87,35 @@ class Machine extends Component {
         })
     }
 
-    deleteBlockInXZ() {
-        var interval;
-        var i = this.state.curX + 1;
+    rigthMovaeXZ(str) {
+        console.log("r" + str)
+        let interval;
+        let ind = this.state.curX + 1;
 
-        interval = setInterval(() => { document.getElementById("xz" + i).style.backgroundColor = "white"; document.getElementById("xz" + i).style.border = "1px solid"; i++ }, this.state.delay);
+        interval = setInterval(() => { console.log("xz" + Number(ind + 26 * str)); document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
         setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curX + Number(this.state.maxX) - 1));
+    }
+
+    leftMovaeXZ(str) {
+        console.log("le" + str)
+        let interval;
+        let ind = this.state.curX + Number(this.state.maxX);
+
+        interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
+        setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curX + Number(this.state.maxX) - 1));
+    }
+
+    deleteBlockInXZ() {
+        for (let i = 0; i < this.state.maxZ; i++) {
+            console.log(i);
+            if (i === 0)
+                this.rigthMovaeXZ(i);
+            else {
+                if (i % 2 === 0)
+                    setTimeout(() => this.rigthMovaeXZ(i), this.state.delay * (i) * (this.state.curX + Number(this.state.maxX) - 1));
+                else setTimeout(() => this.leftMovaeXZ(i), this.state.delay * (i) * (this.state.curX + Number(this.state.maxX) - 1));
+            }
+        }
     }
 
     render() {

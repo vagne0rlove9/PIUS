@@ -18,9 +18,9 @@ class Operator extends Component {
             curX: 0,
             curY: 0,
             curZ: 0,
-            maxX: 0,
-            maxY: 0,
-            maxZ: 0,
+            maxX: 10,
+            maxY: 2,
+            maxZ: 2,
             delay: 500
         };
     }
@@ -61,6 +61,22 @@ class Operator extends Component {
             .catch(err => console.error(err));
     }
 
+    sendManual = () => {
+        var commands = "manualstep"
+
+        this.state.hubConnection
+            .invoke('sendToAll', commands, "hi")
+            .catch(err => console.error(err));
+    }
+
+    sendCommandsManual = () => {
+        var commands = "ms " + this.state.maxX + " " + this.state.maxY + " " + this.state.maxZ + " " + this.state.delay
+
+        this.state.hubConnection
+            .invoke('sendToAll', commands, "hi")
+            .catch(err => console.error(err));
+    }
+
     setConnection() {
         const hubConnection = new SignalR.HubConnectionBuilder().withUrl("/commandhub").build();
 
@@ -91,6 +107,8 @@ class Operator extends Component {
 
     handleChangeMode = (event) => {
         this.setState({ workMode: event.target.value })
+        if (event.target.value === "manual")
+            this.sendCommandsManual();
     }
 
     handleChangeCurX = (event) => {
@@ -163,7 +181,7 @@ class Operator extends Component {
                             </select>
                             {
                                 this.state.workMode === "manual"
-                                    ? <button className="button-step">Сделать шаг</button>
+                                    ? <button className="button-step" onClick={this.sendManual}>Сделать шаг</button>
                                     : null
                             }
                         </div>

@@ -32,6 +32,19 @@ class Machine extends Component {
             saveY: 0,
             saveZ: 0,
             flagPause: false,
+            iXY: 0,
+            iXZ: 0,
+            iYZ: 0,
+            directionXY: "right",
+            directionXZ: "right",
+            directionYZ: "right",
+            curXZx: 0,
+            curYZy: 0,
+            timeXY: 0,
+            stepXXY: 2,
+            stepXYStr: 1,
+            dirXY: "right",
+            countSteps: 0,
         };
     }
 
@@ -46,7 +59,7 @@ class Machine extends Component {
         var blocks = []
         for (var i = 0; i < 42; i++) {
             if (i % 7 !== 0) {
-                blocks.push(<div id={"yz" + i} key={i} className="block-init-yz" style={{ backgroundColor: "black" }}  />)
+                blocks.push(<div id={"yz" + i} key={i} className="block-init-yz" style={{ backgroundColor: "black" }} />)
             } else {
                 blocks.push(<br key={i} />)
             }
@@ -58,7 +71,7 @@ class Machine extends Component {
         var blocks = []
         for (var i = 0; i < 156; i++) {
             if (i % 26 !== 0) {
-                blocks.push(<div id={"xz" + i} key={i} className="block-init-xz" style={{ backgroundColor: "black" }}  />)
+                blocks.push(<div id={"xz" + i} key={i} className="block-init-xz" style={{ backgroundColor: "black" }} />)
             } else {
                 blocks.push(<br key={i} />)
             }
@@ -75,7 +88,6 @@ class Machine extends Component {
                 blocks.push(<br key={i} />)
             }
         }
-        console.log(blocks)
         this.setState({ blocksXY: blocks })
     }
 
@@ -85,7 +97,7 @@ class Machine extends Component {
             if (i % 7 !== 0) {
                 //console.log(blocks[i].props.id)
                 document.getElementById(blocks[i].props.id).style.backgroundColor = "black";
-            } 
+            }
         }
         //this.setState({ blocksYZ: blocks })
     }
@@ -122,32 +134,93 @@ class Machine extends Component {
 
             this.state.hubConnection.on('ReceiveMessage', (recievedMessage) => {
                 //console.log(recievedMessage.split(' '))
-                if (recievedMessage !== "end" && recievedMessage[0] !== "c" && recievedMessage[0] !== "z" && recievedMessage[0] !== 's' && recievedMessage[0] !== 'k') {
-                    //if (!this.state.flagPause) {
+                if (recievedMessage !== "end" && recievedMessage[0] !== "c" && recievedMessage[0] !== "z" && recievedMessage[0] !== 's' && recievedMessage[0] !== 'k' && recievedMessage[0] !== 'm') {
+                    if (!this.state.flagPause) {
                         this.setState({
                             maxX: recievedMessage.split(' ')[0],
                             maxY: recievedMessage.split(' ')[1],
                             maxZ: recievedMessage.split(' ')[2],
                             delay: recievedMessage.split(' ')[3],
                         }, () => { this.setDelayIter() })
-                    //} else {
-
-                    //}
+                    }
+                    else {
+                        //this.conDeleteBlockInXY();
+                        //this.conDeleteBlockInXZ();
+                        //this.conDeleteBlockInYZ();
+                        this.deleteBlockInXZ();
+                        this.deleteBlockInYZ();
+                        this.deleteBlockInXY();
+                    }
                 }
-                
+
+                if (recievedMessage[0] === 'm' && recievedMessage[1] === 's') {
+                    this.setState({
+                        maxX: recievedMessage.split(' ')[1],
+                        maxY: recievedMessage.split(' ')[2],
+                        maxZ: recievedMessage.split(' ')[3],
+                    })
+                }
+
                 if (recievedMessage[0] === 's') {
                     var high = setTimeout(";")
                     for (var i = 0; i < high; i++) {
                         clearInterval(i);
-                        //this.setState({ flagPause: true })
+                        this.setState({ flagPause: true })
+
                     }
                     console.log("stopped")
+                }
+
+                if (recievedMessage === "manualstep") {
+
+                    //var high = setTimeout(";")
+                    //for (var i = 0; i < high; i++) {
+                    //    clearInterval(i);
+                    //    this.setState({ flagPause: true })
+
+                    //}
+                    this.stepXY();
+                    console.log("step")
                 }
 
                 if (recievedMessage[0] === 'k') {
                     var high = setTimeout(";")
                     for (var i = 0; i < high; i++) {
                         clearInterval(i);
+                        this.setState({
+                            curX: 1,
+                            curY: 1,
+                            curZ: 1,
+                            maxX: 0,
+                            maxY: 0,
+                            maxZ: 0,
+                            startX: 1,
+                            startY: 1,
+                            startZ: 1,
+                            delay: 0,
+                            delayIter: 0,
+                            delayX: 0,
+                            delayY: 0,
+                            delayZ: 0,
+                            readyXZ: false,
+                            readyXY: false,
+                            readyYZ: false,
+                            saveX: 0,
+                            saveY: 0,
+                            saveZ: 0,
+                            flagPause: false,
+                            iXY: 0,
+                            iXZ: 0,
+                            iYZ: 0,
+                            directionXY: "right",
+                            directionXZ: "right",
+                            directionYZ: "right",
+                            curXZx: 0,
+                            curYZy: 0,
+                            timeXY: 0,
+                            stepXXY: 2,
+                            stepXYStr: 0,
+                        })
                         //this.setState({ flagPause: true })
                     }
                     this.resetBlocksYZ();
@@ -159,8 +232,55 @@ class Machine extends Component {
         })
     }
 
+    stepXY() {
+        
+        var str = this.state.stepXYStr;
+        var ind = this.state.stepXXY + 26 * str;
+        console.log(ind % 26)
+        console.log(Number(this.state.maxX))
+        this.state.countSteps = this.state.countSteps + 1;
+        if (this.state.countSteps % Number(this.state.maxX) === 0) {
+            console.log("next")
+            str = str + 1
+            ind = this.state.stepXXY + 26 * str;
+            console.log(ind)
+            if (this.state.dirXY == "right")
+                this.state.dirXY = "left";
+            else this.state.dirXY = "right";
+        }
+        if (this.state.dirXY === "right") {
+            console.log("right")
+            document.getElementById("xy" + Number(ind)).style.backgroundColor = "white";
+            document.getElementById("xy" + Number(ind)).style.border = "1px solid";
+            ind = ind + 1
+        } else {
+            console.log("left")
+            ind = ind - 1
+            document.getElementById("xy" + Number(ind)).style.backgroundColor = "white";
+            document.getElementById("xy" + Number(ind)).style.border = "1px solid";
+            
+            
+        }
+
+        if (this.state.dirXY === "right") {
+            this.setState({
+                stepXXY: this.state.stepXXY + 1,
+                stepXYStr: str,
+
+            })
+        } else {
+            this.setState({
+                stepXXY: this.state.stepXXY - 1,
+                stepXYStr: str,
+
+            })
+        }
+
+        
+    }
+
     setDelayIter() {
-        let max = Math.max(this.state.curX + Number(this.state.maxX) - 1, this.state.curY + Number(this.state.maxY) - 1, this.state.curZ + Number(this.state.maxZ) - 1);
+        let max = Math.max(this.state.startX + Number(this.state.maxX) - 1, this.state.startY + Number(this.state.maxY) - 1, this.state.startZ + Number(this.state.maxZ) - 1);
 
         this.setState({
             delayIter: max * this.state.delay,
@@ -179,7 +299,7 @@ class Machine extends Component {
     setEnd = () => {
         setTimeout(this.sendEnd, (this.state.delayX * (this.state.maxZ) * this.state.maxY))
     }
-    
+
     sendEnd = () => {
         console.log((this.state.delayX * (this.state.maxZ - 1) * this.state.maxY))
         this.state.hubConnection
@@ -188,63 +308,45 @@ class Machine extends Component {
     }
 
     rigthMoveXZ(str, count) {
-        //console.log("r" + str)
-        //let interval;
-        //let ind;
-        //if (count < this.state.maxX)
-        //    ind = this.state.startX + 2;
-        //else ind = this.state.startX + 1;
-
-        //interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
-        //setTimeout(() => { clearInterval(interval) }, this.state.delay * (count));
         let interval;
         let ind;
         ind = this.state.startX + 1;
 
-        interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
+        interval = setInterval(() => {
+            document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white";
+            document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid";
+            this.setState({
+                directionXZ: "right",
+                curXZx: ind,
+                iXZ: str,
+            })
+            ind++;
+        }, this.state.delay);
         setTimeout(() => { clearInterval(interval) }, this.state.delayX + 100);
     }
 
     leftMoveXZ(str) {
-        //console.log("le" + str)
-        //let interval;
-
-        //let ind = this.state.startX + Number(this.state.maxX);
-        //let start = ind;
-        //interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
-        //setTimeout(() => {
-        //    clearInterval(interval);
-        //    //if ((start - ind) < (this.state.maxX)) {
-        //    //    if ((start - ind) !== (this.state.maxX - 1)) {
-        //    //        //setTimeout(() => { document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.border = "1px solid"; ind-- }, this.state.delay);
-        //    //        document.getElementById("xz" + Number(ind - 1 + 26 * (str))).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind - 1 + 26 * (str))).style.border = "1px solid";
-        //    //    }
-        //    //    else {
-        //    //        document.getElementById("xz" + Number(ind + 26 * (str))).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * (str))).style.border = "1px solid";
-        //    //    }
-        //    //}
-        //}, this.state.delayX);
         let interval;
 
-        let ind = this.state.startX + Number(this.state.maxX);
-        interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
+        let ind = this.state.startX + Number(this.state.maxX) + 26 * str;
+        interval = setInterval(() => {
+            document.getElementById("xz" + Number(ind)).style.backgroundColor = "white";
+            document.getElementById("xz" + Number(ind)).style.border = "1px solid";
+            this.setState({
+                directionXZ: "left",
+                curXZx: ind,
+                iXZ: str,
+            })
+            ind--
+        }, this.state.delay);
         setTimeout(() => { clearInterval(interval); }, this.state.delayX + 100);
     }
 
     deleteBlockInXZ() {
-        //setTimeout(() => {
-        //    document.getElementById("xz" + Number(this.state.startX)).style.backgroundColor = "white";
-        //    document.getElementById("xz" + Number(this.state.startX)).style.border = "1px solid";
-        //}, this.state.delay);
         for (let i = 0; i < this.state.maxZ; i++) {
             if (i === 0)
                 this.rigthMoveXZ(i);
             else {
-                //if (i % 2 === 0)
-                //    setTimeout(() => this.rigthMoveXZ(i, this.state.maxX), this.state.delayX * i * this.state.maxY);
-                //else if (i === 1)
-                //    setTimeout(() => this.leftMoveXZ(i), this.state.delayX * i * this.state.maxY);
-                //else setTimeout(() => this.leftMoveXZ(i), this.state.delayX * i * this.state.maxY);
                 if (i % 2 === 0)
                     setTimeout(() => this.rigthMoveXZ(i), this.state.delayX * i * this.state.maxY);
                 else setTimeout(() => this.leftMoveXZ(i), this.state.delayX * i * this.state.maxY);
@@ -259,65 +361,45 @@ class Machine extends Component {
     }
 
     rigthMoveYZ(str, count) {
-        //console.log("r" + str)
-        //let interval;
-        //let ind;
-        //if (count < this.state.maxY)
-        //    ind = this.state.startY + 2;
-        //else ind = this.state.startY + 1;
-
-
-        ////interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
-        ////setTimeout(() => { clearInterval(interval) }, this.state.delay * (this.state.curY + Number(this.state.maxY) - 1));
-        ////interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
-        //interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind++ }, this.state.delayX);
-        //setTimeout(() => { clearInterval(interval) }, this.state.delayX * (count));
         let interval;
         let ind;
-        ind = this.state.startY + 1;
-        
+        ind = this.state.startY + 1 + 7 * str;
+
         interval = setInterval(() => {
-            document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid";
+            document.getElementById("yz" + Number(ind)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind)).style.border = "1px solid";
             this.sendZ(str + 1);
+            this.setState({
+                curY: ind,
+                directionYZ: "right",
+                iYZ: str,
+            })
             ind++;
         }, this.state.delayX);
         setTimeout(() => { clearInterval(interval) }, this.state.delayX * this.state.maxY + 100);
     }
 
     leftMoveYZ(str) {
-        //console.log("le" + str)
-        //let interval;
-        //let ind = this.state.startY + Number(this.state.maxY);
-
-        ////interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
-        //interval = setInterval(() => { document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid"; ind-- }, this.state.delayX);
-        //setTimeout(() => { clearInterval(interval) }, this.state.delayX * (this.state.startY + Number(this.state.maxY) - 1));
         let interval;
-        let ind = this.state.startY + Number(this.state.maxY);
+        let ind = this.state.startY + Number(this.state.maxY) + 7 * str;
 
         interval = setInterval(() => {
-            document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid";
+            document.getElementById("yz" + Number(ind)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind)).style.border = "1px solid";
             this.sendZ(str + 1);
+            this.setState({
+                curY: ind,
+                directionYZ: "left",
+                iYZ: str,
+            })
             ind--;
         }, this.state.delayX);
         setTimeout(() => { clearInterval(interval) }, this.state.delayX * this.state.maxY + 100);
     }
 
     deleteBlockInYZ() {
-        //setTimeout(() => {
-        //    document.getElementById("yz" + Number(this.state.startX)).style.backgroundColor = "white";
-        //    document.getElementById("yz" + Number(this.state.startX)).style.border = "1px solid";
-        //}, this.state.delay);
         for (let i = 0; i < this.state.maxZ; i++) {
             if (i === 0)
                 this.rigthMoveYZ(i);
             else {
-                //if (i % 2 === 0)
-                //    setTimeout(() => this.rigthMoveYZ(i, this.state.maxY), this.state.delay * (this.state.startX + Number(this.state.maxX) - 1) * i);
-                ////else setTimeout(() => this.leftMoveYZ(i), this.state.delayX * i);
-                //else if (i === 1)
-                //    setTimeout(() => this.leftMoveYZ(i), this.state.delay * (this.state.startX + Number(this.state.maxX) - 2) * i * this.state.maxY);
-                //else setTimeout(() => this.leftMoveYZ(i), this.state.delayX * i);
                 if (i % 2 === 0)
                     setTimeout(() => this.rigthMoveYZ(i), this.state.delayX * i * this.state.maxY);
                 else setTimeout(() => this.leftMoveYZ(i), this.state.delayX * i * this.state.maxY);
@@ -332,21 +414,18 @@ class Machine extends Component {
     }
 
     rigthMoveXY(str, count) {
-        //let interval;
-        //let ind;
-        //if (count < this.state.maxX)
-        //    ind = this.state.startX + 28;
-        //else ind = this.state.startX + 27;
-
-        //interval = setInterval(() => { document.getElementById("xy" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * str)).style.border = "1px solid"; ind++ }, this.state.delay);
-        //setTimeout(() => { clearInterval(interval); }, this.state.delay * (count));
         let interval;
         let ind;
         ind = this.state.startX + 27 + 26 * str;
 
         interval = setInterval(() => {
-            document.getElementById("xy" + Number(ind )).style.backgroundColor = "white";
-            document.getElementById("xy" + Number(ind )).style.border = "1px solid";
+            document.getElementById("xy" + Number(ind)).style.backgroundColor = "white";
+            document.getElementById("xy" + Number(ind)).style.border = "1px solid";
+            this.setState({
+                curX: ind,
+                iXY: str,
+                directionXY: "right"
+            })
             this.sendXY(ind, str + 1)
             ind++;
         }, this.state.delay);
@@ -355,31 +434,17 @@ class Machine extends Component {
     }
 
     leftMoveXY(str) {
-        //console.log("leXY" + str)
-        //let interval;
-        //let ind = this.state.startX + Number(this.state.maxX);
-        //let start = ind;
-
-        //interval = setInterval(() => { document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.border = "1px solid"; ind-- }, this.state.delay);
-        //setTimeout(() => {
-        //    clearInterval(interval);
-        //    //if ((start - ind) < (this.state.maxX)) {
-        //    //    if ((start - ind) !== (this.state.maxX - 1)) {
-        //    //        //setTimeout(() => { document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.border = "1px solid"; ind-- }, this.state.delay);
-        //    //        document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind - 1 + 26 * (str + 1))).style.border = "1px solid";
-        //    //    }
-        //    //    else {
-        //    //        document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.backgroundColor = "white"; document.getElementById("xy" + Number(ind + 26 * (str + 1))).style.border = "1px solid"; ind--
-        //    //    }
-        //    //}
-        //}, this.state.delayX);
-
         let interval;
         let ind = this.state.startX + Number(this.state.maxX) + 26 * (str + 1);
 
         interval = setInterval(() => {
-            document.getElementById("xy" + Number(ind )).style.backgroundColor = "white";
-            document.getElementById("xy" + Number(ind )).style.border = "1px solid";
+            document.getElementById("xy" + Number(ind)).style.backgroundColor = "white";
+            document.getElementById("xy" + Number(ind)).style.border = "1px solid";
+            this.setState({
+                curX: ind,
+                iXY: str,
+                directionXY: "left"
+            })
             this.sendXY(ind, str + 1)
             ind--;
         }, this.state.delay);
@@ -388,14 +453,9 @@ class Machine extends Component {
     }
 
     deleteBlockInXY() {
-        //setTimeout(() => {
-        //    document.getElementById("xy" + Number(this.state.startX + 27)).style.backgroundColor = "white";
-        //    document.getElementById("xy" + Number(this.state.startX + 27)).style.border = "1px solid";
-        //}, this.state.delay); 
         for (let i = 0; i < this.state.maxY; i++) {
             if (i === 0) {
                 this.rigthMoveXY(i);
-
             }
             else {
                 if (i % 2 === 0) {
@@ -404,11 +464,235 @@ class Machine extends Component {
                 else {
                     setTimeout(() => this.leftMoveXY(i), this.state.delayX * i);
                 }
-                //if (i % 2 === 0)
-                //    setTimeout(() => this.rigthMoveXY(i, this.state.maxX), this.state.delayX * i);
-                //else if (i === 1)
-                //    setTimeout(() => this.leftMoveXY(i), this.state.delayX * i);
-                //else setTimeout(() => this.leftMoveXY(i), this.state.delayX * i);
+            }
+        }
+    }
+
+    conRigthMoveXY(str, count) {
+        let interval;
+        let ind;
+        ind = this.state.curX + 27 + 26 * (str - 1);
+        console.log(this.state.delayX - this.state.delay * (this.state.curX % 26 - 1) + 100)
+        console.log(this.state.maxX - this.state.curX % 26);
+        this.setState({ timeXY: this.state.delayX - this.state.delay * (this.state.curX % 26 - 1) + 100 })
+        interval = setInterval(() => {
+            console.log(ind);
+            document.getElementById("xy" + Number(ind)).style.backgroundColor = "white";
+            document.getElementById("xy" + Number(ind)).style.border = "1px solid";
+            this.setState({
+                curX: ind,
+                iXY: str,
+                directionXY: "right"
+            })
+            this.sendXY(ind, str + 1)
+            ind++;
+        }, this.state.delay);
+        setTimeout(() => { clearInterval(interval); }, this.state.delayX - this.state.delay * (this.state.curX % 26 - 1) + 100);
+
+    }
+
+    conLeftMoveXY(str) {
+        let interval;
+        let ind = this.state.curX - 1;
+        console.log(this.state.delay * (this.state.curX % 26 - 2) + 100 + " XY")
+        console.log(this.state.curX);
+        console.log(this.state.curX % 26 - 2);
+        this.setState({ timeXY: this.state.delay * (this.state.curX % 26 - 2) + 100 })
+        interval = setInterval(() => {
+            console.log(ind);
+            document.getElementById("xy" + Number(ind)).style.backgroundColor = "white";
+            document.getElementById("xy" + Number(ind)).style.border = "1px solid";
+            this.setState({
+                curX: ind,
+                iXY: str,
+                directionXY: "left"
+            })
+            this.sendXY(ind, str + 1)
+            ind--;
+        }, this.state.delay);
+        setTimeout(() => { clearInterval(interval); }, this.state.delay * (this.state.curX % 26 - 2) + 100);
+
+    }
+
+    conDeleteBlockInXY() {
+        console.log("go")
+        var skip = true;
+        for (let i = this.state.iXY; i < this.state.maxY; i++) {
+            if (skip) {
+                if (this.state.directionXY === "right")
+                    this.conRigthMoveXY(i);
+                else this.conLeftMoveXY(i);
+                skip = false;
+            } else {
+                if (i % 2 === 0) {
+                    setTimeout(() => this.rigthMoveXY(i), this.state.delayX * i);
+                }
+                else {
+                    setTimeout(() => this.leftMoveXY(i), this.state.delayX * i);
+                }
+            }
+
+        }
+    }
+
+    conRigthMoveXZ(str, count) {
+        let interval;
+        let ind;
+        ind = this.state.curX + 1 + 26 * (str - 1);
+
+        interval = setInterval(() => { document.getElementById("xz" + Number(ind)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind)).style.border = "1px solid"; ind++ }, this.state.delay);
+        setTimeout(() => { clearInterval(interval) }, this.state.delayX - this.state.delay * (this.state.curX % 26 - 1) + 100);
+    }
+
+    conLeftMoveXZ(str) {
+        let interval;
+
+        let ind = this.state.curX
+        interval = setInterval(() => { document.getElementById("xz" + Number(ind + 26 * str)).style.backgroundColor = "white"; document.getElementById("xz" + Number(ind + 26 * str)).style.border = "1px solid"; ind-- }, this.state.delay);
+        setTimeout(() => { clearInterval(interval); }, this.state.delay * (this.state.curX % 26 - 2) + 100);
+    }
+
+    conDeleteBlockInXZ() {
+        var skip = true;
+        let start = this.state.iXZ;
+        //console.log(this.state.iXZ + " ixz")
+        //console.log((this.state.curXZx % 26 - 1) + " %26 ")
+        //console.log((this.state.curXZx % 26 - 1) === this.state.maxX)
+        //console.log(this.state.maxX)
+        if (Number(this.state.curXZx % 26 - 1) === Number(this.state.maxX)) {
+            start = start + 1;
+            console.log("start=" + start)
+        }
+            
+        for (let i = start; i < this.state.maxZ; i++) {
+            if (skip && ((this.state.curXZx % 26 - 1) < this.state.maxX)) {
+                //console.log(this.state.curXZx % 26 - 1)
+                //console.log(this.state.timeXY + " time")
+                if (this.state.directionXZ === "right")
+                        this.conRigthMoveXZ(i);
+                    else this.conLeftMoveXZ(i);
+                //if ((this.state.curXZx % 26 - 1) !== this.state.maxX) {
+                //    if (this.state.directionXZ === "right")
+                //        this.conRigthMoveXZ(i);
+                //    else this.conLeftMoveXZ(i);
+                //} else {
+                //    //this.setState({})
+                //    //if (this.state.directionXZ === "right")
+                //    setTimeout(() => this.conLeftMoveXZ(i), this.state.timeXY);
+
+                //}
+                skip = false;
+            } else {
+                //console.log("more")
+                //console.log(this.state.timeXY + " time")
+                if (skip) {
+                    //console.log("more x " + this.state.curXZx)
+                    //console.log("more x %" + this.state.curXZx % 26)
+                    if (i % 2 === 0) {
+                        //console.log("more r " + i)
+                        setTimeout(() => this.conRigthMoveXZ((i)), this.state.timeXY);
+                    }
+                    else {
+                        //console.log("more l " + i)
+                        setTimeout(() => this.leftMoveXZ((i)), this.state.timeXY);
+                    }
+                    skip = false;
+                }
+                if (i % 2 === 0) {
+                    setTimeout(() => this.rigthMoveXZ(i), this.state.delayX * i * this.state.maxY);
+                }
+                else {
+                    setTimeout(() => this.leftMoveXZ(i), this.state.delayX * i * this.state.maxY + this.state.timeXY);
+                }
+            }
+        }
+    }
+
+    conRigthMoveYZ(str, count) {
+        let interval;
+        let ind;
+        ind = this.state.curY + 1;
+        console.log(this.state.curY)
+        interval = setInterval(() => {
+            console.log("item" + ind)
+            document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid";
+            this.sendZ(str + 1);
+            ind++;
+        }, this.state.timeXY);
+        setTimeout(() => { clearInterval(interval) }, this.state.timeXY + 100);
+    }
+
+    conLeftMoveYZ(str) {
+        let interval;
+        let ind = this.state.curY;
+
+        interval = setInterval(() => {
+            document.getElementById("yz" + Number(ind + 7 * str)).style.backgroundColor = "white"; document.getElementById("yz" + Number(ind + 7 * str)).style.border = "1px solid";
+            this.sendZ(str + 1);
+            ind--;
+        }, this.state.delayX);
+        setTimeout(() => { clearInterval(interval) }, this.state.delayX * this.state.maxY + 100);
+    }
+
+    conDeleteBlockInYZ() {
+        let start = this.state.iYZ;
+        var skip = true;
+        //console.log(this.state.iXZ + " ixz")
+        //console.log((this.state.curXZx % 26 - 1) + " %26 ")
+        //console.log((this.state.curXZx % 26 - 1) === this.state.maxX)
+        //console.log(this.state.maxX)
+        if (Number(this.state.curY % 7 - 1) === Number(this.state.maxY)) {
+            start = start + 1;
+            console.log("start=" + start)
+        }
+            
+        for (let i = start; i < this.state.maxZ; i++) {
+            //if (i === 0)
+            //    this.rigthMoveYZ(i);
+            //else {
+            //    if (i % 2 === 0)
+            //        setTimeout(() => this.rigthMoveYZ(i), this.state.delayX * i * this.state.maxY);
+            //    else setTimeout(() => this.leftMoveYZ(i), this.state.delayX * i * this.state.maxY);
+            //}
+            if (skip && ((this.state.curY % 7 - 1) < this.state.maxY)) {
+                console.log(this.state.curY % 7 - 1) 
+                console.log(this.state.timeXY + " time")
+                if (this.state.directionYZ === "right")
+                    this.conRigthMoveYZ(i);
+                else this.conLeftMoveYZ(i);
+                //if ((this.state.curXZx % 26 - 1) !== this.state.maxX) {
+                //    if (this.state.directionXZ === "right")
+                //        this.conRigthMoveXZ(i);
+                //    else this.conLeftMoveXZ(i);
+                //} else {
+                //    //this.setState({})
+                //    //if (this.state.directionXZ === "right")
+                //    setTimeout(() => this.conLeftMoveXZ(i), this.state.timeXY);
+
+                //}
+                skip = false;
+            } else {
+                console.log("more " + i)
+                console.log(this.state.timeXY + " time")
+                if (skip) {
+                    console.log("more x " + this.state.curY)
+                    console.log("more x %" + this.state.curY % 7)
+                    if (i % 2 === 0) {
+                        console.log("more r " + i)
+                        setTimeout(() => this.rigthMoveYZ((i)), this.state.timeXY);
+                    }
+                    else {
+                        console.log("more l " + i)
+                        setTimeout(() => this.leftMoveYZ((i)), this.state.timeXY);
+                    }
+                    skip = false;
+                }
+                if (i % 2 === 0) {
+                    setTimeout(() => this.rigthMoveYZ(i), this.state.delayX * i * this.state.maxY);
+                }
+                else {
+                    setTimeout(() => this.leftMoveYZ(i), this.state.delayX * i * this.state.maxY);
+                }
             }
         }
     }
